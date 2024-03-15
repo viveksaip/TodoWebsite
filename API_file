@@ -1,0 +1,49 @@
+//import packages that are installed (in package.json)
+var Express = require("express");
+var Mongoclient = require("mongodb").MongoClient;
+var cors = require("cors");
+const multer = require("multer");
+
+//create instance of the Express app
+var app = Express();
+app.use(cors());
+
+//connect to mongodb
+var CONNECTION_STRING = 'mongodb+srv://viveksai:sairocks@cluster07.hvxi3zn.mongodb.net/';
+
+var DATABASENAME = "todowebdb";
+var database;
+
+app.listen(5038, () => {
+    Mongoclient.connect(CONNECTION_STRING, (error, client) => {
+        database = client.db(DATABASENAME);
+        console.log("VS db connection Successful");
+    });
+})
+
+app.get('/todowebsite/todoapp/GetNotes',(request,response)=>{
+    database.collection("todowebcollection").find({}).toArray((error,result)=>{
+        response.send(result);
+    });
+})
+//on browser check - http://localhost:5038/todowebsite/todoapp/getnotes
+
+app.post('/todowebsite/todoapp/AddNotes', multer().none(), (request, response) => {
+    database.collection("todowebcollection").count({},function(error,numofDocs){
+        database.collection("todowebcollection").insertOne({
+            id: (numofDocs+1).toString(),
+            des: request.body.newNotes
+        });
+        response.json("Added Successfully");
+    });
+})
+
+app.delete('/todowebsite/todoapp/DeleteNotes',(request,response) => {
+    database.collection("todowebcollection").deleteOne({
+        id: request.query.id
+    });
+    response.json("Delete Successfully");
+})
+
+
+
